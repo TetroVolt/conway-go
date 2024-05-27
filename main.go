@@ -7,7 +7,7 @@ import (
 )
 
 func pMod(a int, b int) int {
-    return ((a % b) + b) % b;
+    return ((a % b) + b) % b
 }
 
 func countNeighbors(world [][]bool, r int, c int) int {
@@ -23,7 +23,7 @@ func countNeighbors(world [][]bool, r int, c int) int {
             }
 
             if world[y][x] {
-                nNeighbors += 1;
+                nNeighbors += 1
             }
         }
     }
@@ -39,7 +39,7 @@ func initWorld(rows uint, cols uint) ([][]bool, error) {
     world := make([][]bool, rows)
 
     for i := range rows {
-        world[i] = make([]bool, cols);
+        world[i] = make([]bool, cols)
     }
 
     return world, nil
