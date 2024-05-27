@@ -1,169 +1,147 @@
-
 package main
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 )
 
-func pMod(a int, b int) int {
-    return ((a % b) + b) % b
+func positiveMod(a, b int) int {
+	return ((a % b) + b) % b
 }
 
-func countNeighbors(world [][]bool, r int, c int) int {
-    nNeighbors := 0
+func countNeighbors(world [][]bool, r, c int) int {
+	neighbors := 0
 
-    for dy := -1; dy <= 1; dy++ {
-        for dx := -1; dx <= 1; dx++ {
-            y := pMod(r + dy, len(world))
-            x := pMod(c + dx, len(world[y]))
+	for dy := -1; dy <= 1; dy++ {
+		for dx := -1; dx <= 1; dx++ {
+			y := positiveMod(r+dy, len(world))
+			x := positiveMod(c+dx, len(world[y]))
 
-            if y == r && x == c {
-                continue
-            }
+			if y == r && x == c {
+				continue
+			}
 
-            if world[y][x] {
-                nNeighbors += 1
-            }
-        }
-    }
+			if world[y][x] {
+				neighbors++
+			}
+		}
+	}
 
-    return nNeighbors
+	return neighbors
 }
 
-func initWorld(rows uint, cols uint) ([][]bool, error) {
-    if rows == 0 || cols == 0 {
-        return nil, fmt.Errorf("Cannot construct new world with zero row or column")
-    }
-
-    world := make([][]bool, rows)
-
-    for i := range rows {
-        world[i] = make([]bool, cols)
-    }
-
-    return world, nil
+func initWorld(rows, cols int) [][]bool {
+	world := make([][]bool, rows)
+	for i := range world {
+		world[i] = make([]bool, cols)
+	}
+	return world
 }
 
-func checkDims(a [][]bool, b [][]bool) error {
-    aRows := len(a)
-    bRows := len(a)
+func checkDims(a, b [][]bool) error {
+	if len(a) == 0 || len(b) == 0 || len(a[0]) == 0 || len(b[0]) == 0 {
+		return fmt.Errorf("Zero rows or columns detected")
+	}
 
-    if aRows == 0 || bRows == 0 {
-        return fmt.Errorf("Zero rows detected")
-    }
+	if len(a) != len(b) || len(a[0]) != len(b[0]) {
+		return fmt.Errorf("Mismatched dimensions")
+	}
 
-    aCols := len(a[0])
-    bCols := len(a[0])
-
-    if aCols == 0 || bCols == 0 {
-        return fmt.Errorf("Zero cols detected")
-    }
-
-    if aRows != bRows {
-        return fmt.Errorf("Mismatched rows")
-    }
-
-    if aCols != bCols {
-        return fmt.Errorf("Mismatched columns")
-    }
-
-    return nil
+	return nil
 }
 
-func nextState(newWorld [][]bool, world [][]bool) error {
-    err := checkDims(newWorld, world)
-    if err != nil {
-        return err
-    }
+func nextState(newWorld, world [][]bool) error {
+	if err := checkDims(newWorld, world); err != nil {
+		return err
+	}
 
-    /*
-      Truth table
-      alive, n == 2, n == 3      nextAlive
-        0       0      0             0
-        0       0      1             1
-        0       1      0             0
+	/*
+	   Truth table
+	   alive, n == 2, n == 3      nextAlive
+	     0       0      0             0
+	     0       0      1             1
+	     0       1      0             0
 
-        1       0      0             0
-        1       0      1             1
-        1       1      0             1
-    */
+	     1       0      0             0
+	     1       0      1             1
+	     1       1      0             1
+	*/
 
-    for r, row := range world {
-        for c, alive := range row {
-            neighbors := countNeighbors(world, r, c)
+	for r, row := range world {
+		for c, alive := range row {
+			neighbors := countNeighbors(world, r, c)
+			newWorld[r][c] = neighbors == 3 || (alive && neighbors == 2)
+		}
+	}
 
-            if (neighbors == 3 || (alive && neighbors == 2)) {
-                newWorld[r][c] = true
-            } else {
-                newWorld[r][c] = false
-            }
-        }
-    }
-
-    return nil
+	return nil
 }
 
 func printWorld(world [][]bool) {
-    for _, row := range world {
-        for _, cell := range row {
-            if cell {
-                fmt.Print("#")
-            } else {
-                fmt.Print(".")
-            }
-        }
-        fmt.Print("\n")
-    }
+	for _, row := range world {
+		for _, cell := range row {
+			if cell {
+				fmt.Print("O")
+			} else {
+				// fmt.Print(".")
+				fmt.Print("·")
+			}
+		}
+		fmt.Println()
+	}
+}
+
+func renderAndComputeNextWorld(nextWorld, world [][]bool) error {
+	printWorld(world)
+	if err := nextState(nextWorld, world); err != nil {
+		return err
+	}
+	return nil
 }
 
 func mainLoop() {
-    const nCols = 10
-    const nRows = 10
+	const (
+		nCols = 10
+		nRows = 10
+	)
 
-    worldA, err := initWorld(nRows, nCols)
-    if err != nil {
-        fmt.Printf("Error creating worldA: %s\n", err)
-        return
-    }
-    worldB, err := initWorld(nRows, nCols)
-    if err != nil {
-        fmt.Printf("Error creating worldB: %s\n", err)
-        return
-    }
+	worldA := initWorld(nRows, nCols)
+	worldB := initWorld(nRows, nCols)
 
-    // glider
-    //   012
-    // 0  #
-    // 1   #
-    // 2 ###
-    worldA[0][1] = true
-    worldA[1][2] = true
-    worldA[2][0] = true
-    worldA[2][1] = true
-    worldA[2][2] = true
+	// glider
+	worldA[0][1] = true
+	worldA[1][2] = true
+	worldA[2][0] = true
+	worldA[2][1] = true
+	worldA[2][2] = true
 
-    err = nil
-    for i := range(100) {
-        fmt.Printf("World [%s]:\n", i)
-        if i % 2 == 0 {
-            printWorld(worldA)
-            err = nextState(worldB, worldA)
-        } else {
-            printWorld(worldB)
-            err = nextState(worldA, worldB)
-        }
+	for i := 0; i < 100; i++ {
+		fmt.Printf("World Iteration [%d]:\n", i)
 
-        if err != nil {
-            fmt.Printf("An error occured computing next world: %s\n", err)
-            return
-        }
-        time.Sleep(100 * time.Millisecond)
-    }
+		var (
+			nextWorld [][]bool = nil
+			world     [][]bool = nil
+		)
+
+		if i%2 == 0 {
+			nextWorld = worldB
+			world = worldA
+		} else {
+			nextWorld = worldA
+			world = worldB
+		}
+
+		if err := renderAndComputeNextWorld(nextWorld, world); err != nil {
+			fmt.Printf("An error occurred computing next world: %s\n", err)
+			return
+		}
+
+		time.Sleep(50 * time.Millisecond)
+	}
 }
 
 func main() {
-    fmt.Println("Conway's game of life")
-    mainLoop()
-}
+	fmt.Println("Conway's game of life")
 
+	mainLoop()
+}
