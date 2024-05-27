@@ -155,7 +155,7 @@ func mainLoop() {
         }
 
         if err != nil {
-            fmt.Printf("Error creating world: %s\n", err)
+            fmt.Printf("An error occured computing next world: %s\n", err)
             return
         }
         time.Sleep(100 * time.Millisecond)
